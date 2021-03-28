@@ -1,8 +1,13 @@
-import 'package:ChiTcHat_App/screens/auth_screen.dart';
-import 'package:ChiTcHat_App/screens/chat_screen.dart';
+
+import 'package:firebase_core/firebase_core.dart';
+
+import './screens/auth_screen.dart';
+import './screens/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-void main() {
+void main()async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
@@ -18,7 +23,8 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Raleway',
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: StreamBuilder(stream: FirebaseAuth.instance.onAuthStateChanged,builder: (ctx, snapShots){
+      home: StreamBuilder(stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (ctx, snapShots){
         if(snapShots.hasData){
           return ChatScreen();
         }

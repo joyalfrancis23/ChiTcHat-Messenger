@@ -1,4 +1,4 @@
-
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +6,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../pickers/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class AuthScreen extends StatefulWidget {
   @override
@@ -22,7 +24,10 @@ class _AuthScreenState extends State<AuthScreen> {
   final TextEditingController passwordController = TextEditingController();
   BuildContext ctx;
   var _isSignUp = false;
-
+  File _userImage;
+  void _imagePicker(File image){
+    _userImage=image;
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -32,12 +37,12 @@ class _AuthScreenState extends State<AuthScreen> {
     final GoogleSignInAuthentication googleAuth =
         await googleUser.authentication;
 
-    final AuthCredential credential = GoogleAuthProvider.getCredential(
+    final AuthCredential credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken, accessToken: googleAuth.accessToken);
 
-    final FirebaseUser user =
+    final User user =
         ((await _auth.signInWithCredential(credential)).user);
-        if(user.isEmailVerified){
+        if(user.emailVerified){
          Navigator.pushReplacementNamed(context,'/chatScreen');
         }else{
           print("Cannot verify your gmail credentials");
@@ -48,7 +53,7 @@ class _AuthScreenState extends State<AuthScreen> {
     try{
     print(nameController.toString());
     print(passwordController.toString());
-    AuthResult firebaseuser = await FirebaseAuth.instance.signInWithEmailAndPassword(email: nameController.text.trim(), password: passwordController.text.trim());
+    UserCredential firebaseuser = await FirebaseAuth.instance.signInWithEmailAndPassword(email: nameController.text.trim(), password: passwordController.text.trim());
     Navigator.pushReplacementNamed(context,'/chatScreen');
     print(firebaseuser.user);
     }catch(e){
@@ -56,21 +61,30 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
   Future<void> _signUp()async{
-    
     print(_isSignUp);
+    if(_userImage==null){
+      ScaffoldMessenger.of(context).showSnackBar(new SnackBar(content: Text('Please pick an image'),));
+    }
     try{
-      AuthResult _signUpUser = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: nameController.text, password: passwordController.text);
+      UserCredential _signUpUser = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: nameController.text, password: passwordController.text,);
+
+      final imagePath=FirebaseStorage.instance.ref().child('user_images').child(_signUpUser.user.uid+'.jpg');
+      await imagePath.putFile(_userImage);
+      final _imageUrl=await imagePath.getDownloadURL();
+
       Navigator.pushReplacementNamed(context,'/chatScreen');
-      await Firestore.instance.collection('userAccounts').document(_signUpUser.user.uid).setData({
+      await FirebaseFirestore.instance.collection('userAccounts').doc(_signUpUser.user.uid).set({
         'username' : usernameController.text,
         'email' : nameController.text,
+        'password' : passwordController.text,
+        'image_url' : _imageUrl,
       });
       
       print(_signUpUser.user);
     }
     catch(e){
       print(e.message);
-      return Scaffold.of(context).showSnackBar(new SnackBar(content: Text(e.message)));
+      return ScaffoldMessenger.of(context).showSnackBar(new SnackBar(content: Text(e.message)));
     }
     
   }
@@ -106,7 +120,7 @@ class _AuthScreenState extends State<AuthScreen> {
         ]
         ),
         ),
-                SizedBox(height: 20),
+                SizedBox(height: 5),
                 Text(
                   'Enter your email and password below to continue and let the conversations begin!',
                   textAlign: TextAlign.center,
@@ -114,9 +128,13 @@ class _AuthScreenState extends State<AuthScreen> {
                       GoogleFonts.openSans(color: Colors.white, fontSize: 14),
                 ),
                 SizedBox(
-                  height: 50,
+                  height: 20,
                 ),
-
+                
+                if(_isSignUp)
+                  SizedBox(child: ImagePickersection(_imagePicker)),
+                
+                SizedBox(height: 8,),
                 if(_isSignUp)
                   _buildTextField(
                     usernameController, Icons.person_outline_rounded, 'Username'),
@@ -166,7 +184,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   },
                    child:Text(_isSignUp?'Already have an account? then Login':'Don\'t have an account? then Sign In.') ,
                    ),
-                SizedBox(height: 120),
+                SizedBox(height: 20),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: _buildFooterLogo(),

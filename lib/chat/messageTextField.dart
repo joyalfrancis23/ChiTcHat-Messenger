@@ -11,14 +11,18 @@ class _MessageFieldState extends State<MessageField> {
   final _messageField = new TextEditingController();
   void _sendMessage()async{
     FocusScope.of(context).unfocus();
-    final user = await FirebaseAuth.instance.currentUser();
-    Firestore.instance.collection('chat').add({
+    final user = FirebaseAuth.instance.currentUser;
+    final name = await FirebaseFirestore.instance.collection('userAccounts').doc('${user.uid}').get();
+    await FirebaseFirestore.instance.collection('chat').add({
       'text': _enteredMessage,
       'timestamp':Timestamp.now(),
       'userId': user.uid,
-    }).then((value) => print('Method for sending a message has been called!!!')).catchError((didg){print(didg);});
+      'displayName': !name.exists?user.displayName:name['username'],
+      'image_url': !name.exists?user.photoURL:name['image_url'],
+    }).then((value) => print('Method for sending a message has been called!!!')).catchError((didg){print('Error in sending message $didg');});
     _messageField.clear();
-
+    print(name);
+    print("Working");
   }
   @override
   Widget build(BuildContext context) {

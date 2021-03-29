@@ -9,7 +9,6 @@ class ChatScreen extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    // CollectionReference users = FirebaseFirestore.instance.collection('chats/IJnxRWmCqowSwiRHppey/messages');
 
     return Scaffold(
         appBar: AppBar(title: RichText(text: TextSpan(text:'ChiT',style: GoogleFonts.raleway(

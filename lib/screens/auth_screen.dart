@@ -69,7 +69,7 @@ class _AuthScreenState extends State<AuthScreen> {
       UserCredential _signUpUser = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: nameController.text, password: passwordController.text,);
 
       final imagePath=FirebaseStorage.instance.ref().child('user_images').child(_signUpUser.user.uid+'.jpg');
-      imagePath.putFile(_userImage);
+      await imagePath.putFile(_userImage);
       final _imageUrl=await imagePath.getDownloadURL();
 
       Navigator.pushReplacementNamed(context,'/chatScreen');

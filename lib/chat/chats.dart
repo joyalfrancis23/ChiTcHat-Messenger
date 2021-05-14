@@ -16,12 +16,12 @@ class ChatsMsg extends StatelessWidget {
                       return Center(child: SplashScreen());
                     }
                     return StreamBuilder(
-                    stream: FirebaseFirestore.instance.collection('chat').orderBy('timestamp',descending: true).snapshots(),
-                   builder: (BuildContext context, AsyncSnapshot <QuerySnapshot> snapShot){
-                  if(snapShot.connectionState == ConnectionState.waiting){
-                    return Center(child: SplashScreen());
+                     stream: FirebaseFirestore.instance.collection('chat').orderBy('timestamp',descending: true).snapshots(),
+                     builder: (BuildContext context, AsyncSnapshot <QuerySnapshot> snapShot){
+                       if(snapShot.connectionState == ConnectionState.waiting){
+                          return Center(child: SplashScreen());
 
-                   }
+                       }
                     final docs = snapShot.data.docs;
                     
                         return ListView.builder(
